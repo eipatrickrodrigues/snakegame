@@ -14,3 +14,9 @@ keyPush' is declared but its value is never read.ts(6133)
 Tentei verificar algumas respostas em problemas similares aqui no GitHub e em outras plataformas, porém nada relacionado ao meu caso, talvez falte mais um pouco de persistência na procura, mas já dei muito tempo à isso e resolvi pedir ajuda aqui... Alguém sabe o que há de errado?
 
 Aguardando resposta...
+
+Não foi possível dar prosseguimento no código devido à erros graves, segundo informações. O recomendado foi inciar outro código seguindo outra vídeo aula. Será feito.
+
+## Realizado novo código funcional
+
+Através do canal Coding With Adam (https://www.youtube.com/watch?v=7Azlj0f9vas&ab_channel=CodingWithAdam) aprendi como se faz o jogo e compreender a lógica. 
