@@ -1,112 +1,204 @@
-window.onload = function(){
+const canvas = window.document.getElementById('canvas')
+const context = canvas.getContext('2d')
 
-    var canvas = document.getElementById("canvas");
-    var context = canvas.getContext("2d");
-    document.addEventListener("keydown", keyPush());
-    
-    setInterval(game, 60) /* O jogo funciona formando diferentes telas ao longo do tempo, definido aqui 60 quadros por segundo. */
+// request animation frame
+//set interval x time per a second
+// set time out
 
-    const vel = 1;
-    var vx = vy = 0; /* Velocidade inicial */
-    var px = py = 10; /* Posição inicial da cabeça da cobra */
-    var dim = 20;  /* Dimensão de cada quadrado componente do canva */
-    var qtdade = 20; /* Quantidade de quadrados por cada linha/coluna */
-    var apple_x = apple_y = 15 /* Localização inicial da maçã */
+class SnakePart{
 
-    var trail = []; /* O rastro deixado pela cobra começa zerado */
-    tail = 5; /* Tamanho da calda */
+    constructor(x, y){
+        this.x = x;
+        this.y = y;
+    }
+}
 
-    function game(){
+let speed = 7;
 
-        /* Cada nova vez que a funcção game for chamada, irá atualizar a posição da cabeça da cobra, nomeada como variável px */
-        px += vx; /* A posição segue na direção da velocidade */
-        py += vy;
+let tileCounts = 20; // Quantidade de ladrinhos em uma direção
+let tileSize = canvas.width / (tileCounts - 2);
+let headX = 10;
+let headY = 10;
+const snakeParts = [];
+let tailLength = 2;
 
-        /* Quando a cobra encostar na parede, deve reaperecer do outro lado */
-        if (px<0){
-            px = qtdade - 1;
-        }
-        if (px>dim){
-            px = 0
-        }
-        if (py<0){
-            py = qtdade - 1;
-        }
-        if (py>dim){
-            py = 0
-        }
+let appleX = 5; 
+let appleY = 5;
 
-        /* Configuração do Canvas */
-        context.fillStyle = "black";
-        context.fillRect(0,0,canvas.width,canvas.height);
+let xvelocity = 0;
+let yvelocity = 0;
 
-        /* Configuração da maçã */
-        context.fillStyle = "red";
-        context.fillRect(apple_x*dim, apple_y*dim, dim,dim);
+let score = 0;
+const gulpSound = new Audio("108672173.mp3")
 
 
-        /* Configuração do rastro da cobra */
-        context.fillStyle = "gray";
+// Game loop
+function drawGame(){
+    changeSnakePosition()
+    let result = isGameOver();
+    if (result){
+        return
+    }
 
-        for(var i = 0; i<trail.length; i++){
-            context.fillRect(trail[i].x*dim, trail[i].y*dim, dim,dim);
-
-            /* Verificação se a cobra bate em si mesma. */
-            if (trail[i].x == px && trail[i].y == py){
-                vx = vy = 0;
-            } 
-
-            /* Movimento da cobra é dado por um objeto */
-            trail.push({x:px,y:py});
-            while (trail.length > tail){
-                trail.shift(); /* Se o trilho for maior que a calda, é retirado o último quadrado do rastro. */
-            }
-
-            if (apple_x==px && apple_y==py){
-                tail ++
-
-                /* Após comer a maçã, esta precisa ser reposicionada randomicamente. */
-                apple_x = Math.floor(Math.random()*dim); /* floor é para arredondamento para baixo */
-                apple_y = Math.floor(Math.random()*dim);
-            }
-        }
-
-        /* A movimentação do jogo */
-        function keyPush(event){
-
-            switch (event.keyCode) {
-                /* Tecla 37 é a direcional para esquerda */
-                case 37: 
-                    vx = -vel;
-                    vy = 0;
-                    break;
-                /* Tecla 38 é a direcional para cima */
-                case 38: 
-                    vx = 0;
-                    vy = -vel;
-                    break;
-                /* Tecla 39 é a direcional para direita */
-                case 39: 
-                    vx = vel;
-                    vy = 0;
-                    break;
-                /* Tecla 40 é a direcional para baixo */
-                case 40: 
-                    vx = 0;
-                    vy = vel;
-                    break;
-                default:
-                    break;
-            }
-        }
+    clearScreen();
+    checkAppleCollision();
+    drawApple();
+    drawSnake();
+    drawScore();
+    setTimeout(drawGame, 1000/speed);
 
 
+    if (score>5){
+        speed = 10;
+    }
+    if (score > 10){
+        speed = 15;
+    }
+
+
+
+
+}
+
+function isGameOver(){
+
+    if (yvelocity === 0 && xvelocity === 0){
+        return false; 
+    }
+       
+
+    let gameOver = false;
+    // Será verdade quando bater nas paredes ou no próprio corpo
+    if (headX < 0){
+        gameOver = true;
 
     }
+    else if (headX == tileCounts){
+        gameOver = true;
     
-    
-    
-    
+    }else if (headY < 0){
+        gameOver = true;
+    }else if (headY == 20){
+        gameOver = true;
+    }
 
+    for(let i = 0; i < snakeParts.length; i++){
+        let part = snakeParts[i];
+        if (part.x === headX && part.y === headY){
+            gameOver = true;
+            break
+        }
+    }
+
+    if (gameOver){
+        context.fillStyle = 'brown'
+        context.font = '50px Verdana'
+        context.fillText('Game Over!', canvas.width / 6.5, canvas.height/2)
+    }
+
+    return gameOver;
+
+}
+
+
+function drawScore(){
+
+    context.fillStyle = 'white';
+    context.font = '12px Verdana'
+    context.fillText('Score: ' + score, canvas.width-70, 20);
+}
+
+function clearScreen(){
+
+    context.fillStyle = 'grey';
+    context.fillRect(0,0,canvas.width, canvas.height);
+}
+
+function drawSnake(){
+
+    context.fillStyle = 'green';
+    context.fillRect(headX*tileCounts, headY*tileCounts, tileSize, tileSize)
+
+    context.fillStyle = 'purple'
+    for(let i = 0; i < snakeParts.length; i++){
+
+        let part = snakeParts[i];
+        context.fillRect(part.x * tileCounts, part.y * tileCounts, tileSize, tileSize)
+    }
+
+    snakeParts.push(new SnakePart(headX, headY));
+    if (snakeParts.length > tailLength){
+        snakeParts.shift();
+    }
+
+    while (snakeParts.length > tailLength){
+        snakeParts.shift();
+    }
+
+
+
+
+}
+
+function changeSnakePosition(){
+
+    headX = headX + xvelocity // As velocidades são definida pelas setas.
+    headY = headY + yvelocity
+
+
+}
+
+function drawApple(){
+
+    context.fillStyle = 'red'
+    context.fillRect(appleX*tileCounts, appleY*tileCounts, tileSize, tileSize)
     
 }
+
+function checkAppleCollision(){
+
+    if(appleX == headX && appleY == headY){
+
+        appleX = Math.floor(Math.random() * tileCounts); // Quando a cobra comer a maça, uma nova posição X será sorteada.
+        appleY = Math.floor(Math.random() * tileCounts);
+        tailLength++;
+        score++;
+        gulpSound.play();
+    }
+    
+}
+
+document.body.addEventListener('keydown', keyDown);
+
+function keyDown(event){
+
+    if(event.keyCode == 38){ //up
+        if(yvelocity == 1) // Retorno de sinal contrário para que a cobra não volte na mesma direção, em cima do próprio corpo.
+            return;
+        yvelocity = -1 // Positivo é de cima para baixo
+        xvelocity = 0
+    }
+    if(event.keyCode == 40){ // down
+        if(yvelocity == -1)
+            return;
+        yvelocity = 1
+        xvelocity = 0
+    }
+    if(event.keyCode == 37){ //left
+        if(xvelocity == 1)
+            return;
+        yvelocity = 0
+        xvelocity = -1
+    }
+    if(event.keyCode == 39){ //right
+        if(xvelocity == -1)
+            return;
+        yvelocity = 0
+        xvelocity = 1
+    }
+
+
+}
+
+
+drawGame();
